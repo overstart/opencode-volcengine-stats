@@ -75,7 +75,7 @@ function WidgetBody(api: any, options: Required<PluginOptions>) {
         return text({ fg: theme.textMuted }, [error() ? "ark ✕" : "ark …"])
       }
       return box(
-        { flexDirection: "column" },
+        { flexDirection: "column", rowGap: 1 },
         d.windows.map((w) => {
           const cd = options.showCountdown ? formatCountdown(w.resetAt, now()) : ""
           const row = [

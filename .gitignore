@@ -1,0 +1,7 @@
+node_modules/
+.codegraph/
+*.log
+
+# Local-only / not shipped in the package repo.
+openspec/
+.opencode/

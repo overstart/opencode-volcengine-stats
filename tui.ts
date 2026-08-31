@@ -75,8 +75,8 @@ function WidgetBody(api: any, options: Required<PluginOptions>) {
         return text({ fg: theme.textMuted }, [error() ? "ark ✕" : "ark …"])
       }
       return box(
-        { flexDirection: "column", rowGap: 1 },
-        d.windows.map((w) => {
+        { flexDirection: "column" },
+        d.windows.flatMap((w, i) => {
           const cd = options.showCountdown ? formatCountdown(w.resetAt, now()) : ""
           const row = [
             text({ fg: theme.textMuted }, [w.label]),
@@ -84,7 +84,13 @@ function WidgetBody(api: any, options: Required<PluginOptions>) {
             text({ fg: theme.text }, [`${Math.round(w.percent).toString().padStart(3, " ")}%`]),
           ] as Child[]
           if (cd) row.push(text({ fg: theme.textMuted }, [`in ${cd}`]))
-          return box({ flexDirection: "row", gap: 1, alignItems: "center" }, row)
+          const line = box({ flexDirection: "row", gap: 1, alignItems: "center" }, row)
+          if (i === d.windows.length - 1) return [line]
+          // Faint separator between bars (no extra blank row).
+          const divider = text({ fg: theme.borderSubtle ?? theme.textMuted }, [
+            "╌".repeat(options.barWidth + 10),
+          ])
+          return [line, divider]
         }),
       )
     },

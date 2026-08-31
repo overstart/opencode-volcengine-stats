@@ -162,7 +162,7 @@ file):
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["../tui.tsx"]
+  "plugin": ["../tui.ts"]
 }
 ```
 
@@ -191,7 +191,9 @@ Example `tui.json` (options via `[spec, options]`):
 ## Development
 
 - Data layer (pure, no TUI): `src/usage.ts`
-- TUI plugin module (Solid JSX, opentui): `src/index.tsx`
+- TUI plugin module (Solid signals + imperative opentui `createElement`,
+  because TUI plugins shipped as npm packages are not JSX-transformed):
+  `tui.ts`
 - TUI config that loads it in this repo: `.opencode/tui.json`
 
 ```bash

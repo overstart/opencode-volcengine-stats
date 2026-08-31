@@ -32,10 +32,13 @@ function el(tag: string, props: Record<string, unknown>, children: Child[] = [])
 const box = (props: Record<string, unknown>, children: Child[] = []) => el("box", props, children)
 const text = (props: Record<string, unknown>, children: Child[] = []) => el("text", props, children)
 
-function colorForPercent(percent: number, theme: any): any {
+function barColor(key: string, percent: number, theme: any): any {
+  // Distinct hue per window so 5h / 1W / 1M are tellable at a glance;
+  // monthly still ramps to red when nearly exhausted.
+  if (key === "session") return theme.info ?? theme.primary
+  if (key === "weekly") return theme.success
   if (percent >= 90) return theme.error
-  if (percent >= 70) return theme.warning
-  return theme.success
+  return theme.warning
 }
 
 function WidgetBody(api: any, options: Required<PluginOptions>) {
@@ -76,21 +79,15 @@ function WidgetBody(api: any, options: Required<PluginOptions>) {
       }
       return box(
         { flexDirection: "column" },
-        d.windows.flatMap((w, i) => {
+        d.windows.map((w) => {
           const cd = options.showCountdown ? formatCountdown(w.resetAt, now()) : ""
           const row = [
             text({ fg: theme.textMuted }, [w.label]),
-            text({ fg: colorForPercent(w.percent, theme) }, [bar(w.percent, options.barWidth)]),
+            text({ fg: barColor(w.key, w.percent, theme) }, [bar(w.percent, options.barWidth)]),
             text({ fg: theme.text }, [`${Math.round(w.percent).toString().padStart(3, " ")}%`]),
           ] as Child[]
           if (cd) row.push(text({ fg: theme.textMuted }, [`in ${cd}`]))
-          const line = box({ flexDirection: "row", gap: 1, alignItems: "center" }, row)
-          if (i === d.windows.length - 1) return [line]
-          // Faint separator between bars (no extra blank row).
-          const divider = text({ fg: theme.borderSubtle ?? theme.textMuted }, [
-            "╌".repeat(options.barWidth + 10),
-          ])
-          return [line, divider]
+          return box({ flexDirection: "row", gap: 1, alignItems: "center" }, row)
         }),
       )
     },

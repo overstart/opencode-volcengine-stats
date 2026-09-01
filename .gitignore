@@ -5,3 +5,6 @@ node_modules/
 # Local-only / not shipped in the package repo.
 openspec/
 .opencode/
+
+# Local agent guidance, not published.
+AGENTS.md

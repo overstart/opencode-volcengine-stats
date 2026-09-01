@@ -1,6 +1,6 @@
 {
   "name": "opencode-volcengine-stats",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "OpenCode TUI plugin: show Volcengine Ark Coding Plan quota (5h / weekly / monthly) as progress bars in the top-right / sidebar.",
   "keywords": [
     "opencode",

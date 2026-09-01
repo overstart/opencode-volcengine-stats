@@ -50,8 +50,8 @@ plugins at startup.
 ### Option 1 — let OpenCode add it
 
 ```bash
-opencode plugin add opencode-volcengine-stats        # current project
-opencode plugin add opencode-volcengine-stats -g     # global (all projects)
+opencode plugin opencode-volcengine-stats        # current project
+opencode plugin opencode-volcengine-stats -g     # global (all projects)
 ```
 
 ### Option 2 — edit the TUI config

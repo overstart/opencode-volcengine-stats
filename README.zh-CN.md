@@ -47,8 +47,8 @@ arkcli usage plan --product coding-plan --format json   # 自检
 ### 方式一：让 OpenCode 自动添加
 
 ```bash
-opencode plugin add opencode-volcengine-stats        # 当前项目
-opencode plugin add opencode-volcengine-stats -g     # 全局（所有项目）
+opencode plugin opencode-volcengine-stats        # 当前项目
+opencode plugin opencode-volcengine-stats -g     # 全局（所有项目）
 ```
 
 ### 方式二：手动编辑 TUI 配置

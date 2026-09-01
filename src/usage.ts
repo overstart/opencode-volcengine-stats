@@ -30,8 +30,6 @@ export class UsageError extends Error {}
 interface ArkPeriod {
   label?: string
   percent?: number
-  used?: number
-  total?: number
   reset_at?: string
 }
 
@@ -46,13 +44,10 @@ interface ArkPlanOutput {
   items?: ArkItem[]
 }
 
-const LABELS: Record<string, { key: WindowKey; label: string }> = {
-  session: { key: "session", label: "5h" },
-  "5h": { key: "session", label: "5h" },
-  weekly: { key: "weekly", label: "1W" },
-  week: { key: "weekly", label: "1W" },
-  monthly: { key: "monthly", label: "1M" },
-  month: { key: "monthly", label: "1M" },
+const LABELS: Record<WindowKey, string> = {
+  session: "5h",
+  weekly: "1W",
+  monthly: "1M",
 }
 
 const ORDER: WindowKey[] = ["session", "weekly", "monthly"]
@@ -124,19 +119,13 @@ export function normalize(data: ArkPlanOutput, product: string): UsageData {
 
   const byKey = new Map<WindowKey, UsageWindow>()
   for (const p of item.periods ?? []) {
-    const raw = (p.label ?? "").toLowerCase()
-    const mapped = LABELS[raw]
-    if (!mapped) continue
-    const percent =
-      typeof p.percent === "number"
-        ? p.percent
-        : p.total
-          ? (p.used ?? 0) / p.total * 100
-          : 0
-    byKey.set(mapped.key, {
-      key: mapped.key,
-      label: mapped.label,
-      percent: clampPercent(percent),
+    const key = (p.label ?? "").toLowerCase() as WindowKey
+    const label = LABELS[key]
+    if (!label) continue
+    byKey.set(key, {
+      key,
+      label,
+      percent: clampPercent(p.percent ?? 0),
       resetAt: p.reset_at,
     })
   }

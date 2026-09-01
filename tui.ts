@@ -105,29 +105,13 @@ const tui: TuiPlugin = async (api, rawOptions) => {
 
   api.slots.register({
     slots: {
-      // Session screen: in-flow inside the right sidebar, below the title.
+      // Session screen only: in-flow inside the right sidebar, below the
+      // title. The host mounts this slot with a session_id, so the widget
+      // never appears on the home screen (matches context/mcp sidebar items).
       sidebar_content(_ctx: unknown, _props: unknown) {
         return box({ marginTop: 1, flexShrink: 0, flexDirection: "column" }, [
           WidgetBody(api, options),
         ])
-      },
-      // Home screen: overlay in the empty top-right corner (suppressed on
-      // other routes, where the sidebar owns that corner).
-      app() {
-        if (api.route?.current?.name !== "home") return null
-        return box(
-          {
-            position: "absolute",
-            top: 0,
-            right: 1,
-            zIndex: 5000,
-            flexShrink: 0,
-            flexDirection: "column",
-            paddingLeft: 1,
-            paddingRight: 1,
-          },
-          [WidgetBody(api, options)],
-        )
       },
     },
   })

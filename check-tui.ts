@@ -19,24 +19,11 @@ const api: any = {
 
 await (mod as any).tui(api, {})
 const reg = (globalThis as any).__r
-if (typeof reg?.slots?.app !== "function") throw new Error("no app slot")
 if (typeof reg?.slots?.sidebar_content !== "function") throw new Error("no sidebar_content slot")
-
-// Home route: app slot returns an overlay node rendering the loading state.
-api.route.current = { name: "home" }
-const t = await testRender(() => reg.slots.app({}, {}), { width: 100, height: 30 })
-await t.renderOnce()
-const homeFrame = t.captureCharFrame()
-if (!homeFrame.includes("ark")) throw new Error("home overlay did not mount (ark …)")
-console.log("home overlay mounted:", JSON.stringify(homeFrame.split("\n").find((l: string) => l.includes("ark"))?.trim()))
-
-// Session route: app slot must render nothing (sidebar owns the corner).
-api.route.current = { name: "session" }
-if (reg.slots.app({}, {}) !== null) throw new Error("app overlay must be suppressed on session")
-console.log("session app overlay suppressed: null OK")
+// No app/home overlay: the widget must only exist inside a session sidebar.
+if (typeof reg?.slots?.app === "function") throw new Error("app slot must not be registered")
 
 // Session: sidebar_content returns a node mounting the loading state.
-api.route.current = { name: "home" }
 const t2 = await testRender(() => reg.slots.sidebar_content({ session_id: "s1" }, {}), { width: 42, height: 30 })
 await t2.renderOnce()
 const sideFrame = t2.captureCharFrame()

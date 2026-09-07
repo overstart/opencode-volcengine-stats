@@ -14,7 +14,8 @@ Coding Plan** 套餐用量（和自带的 context、mcp 面板一样，只在会
 ![截图：OpenCode 会话右侧栏中的 5h / 1W / 1M 用量进度条](docs/screenshot.png)
 
 数据来自本机 [`arkcli`](https://www.npmjs.com/package/@volcengine/ark-cli)
-——插件本身不调用方舟 API、不处理鉴权。
+——插件本身不调用方舟 API、不处理鉴权。默认每 60s 自动刷新；按
+**`ctrl+alt+r`**（或点击进度条下方的 `↻` 行）可立即手动刷新。
 
 ## 安装
 
@@ -57,6 +58,7 @@ opencode plugin opencode-volcengine-stats -g     # 全局（所有项目）
 | `pollMs`        | `60000`         | 数据重新拉取间隔（毫秒）     |
 | `barWidth`      | `14`            | 进度条轨道宽度（单元格）     |
 | `showCountdown` | `true`          | 是否显示重置倒计时           |
+| `refreshKey`    | `"ctrl+alt+r"`  | 立即刷新的快捷键             |
 
 ```json
 {

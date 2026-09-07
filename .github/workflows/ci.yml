@@ -23,3 +23,6 @@ jobs:
 
       - name: Logic self-check
         run: bun run check
+
+      - name: TUI wiring self-check
+        run: bun run check:tui

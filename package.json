@@ -1,6 +1,6 @@
 {
   "name": "opencode-volcengine-stats",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "OpenCode TUI plugin: show Volcengine Ark Coding Plan quota (5h / weekly / monthly) as progress bars in the session sidebar.",
   "keywords": [
     "opencode",
@@ -47,9 +47,9 @@
     "pack:dry-run": "npm pack --dry-run"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "^1.18.25",
-    "@opentui/core": "^0.5.9",
-    "@opentui/solid": "^0.5.9",
+    "@opencode-ai/plugin": "^1.18.29",
+    "@opentui/core": "^0.5.11",
+    "@opentui/solid": "^0.5.11",
     "solid-js": "^1.9.15"
   },
   "devDependencies": {

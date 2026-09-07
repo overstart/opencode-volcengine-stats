@@ -15,6 +15,7 @@ interface PluginOptions {
   pollMs?: number
   barWidth?: number
   showCountdown?: boolean
+  refreshKey?: string
 }
 
 type Child = string | number | boolean | null | undefined | object | (() => Child)
@@ -41,15 +42,21 @@ function barColor(key: string, percent: number, theme: any): any {
   return theme.warning
 }
 
-function WidgetBody(api: any, options: Required<PluginOptions>) {
+function WidgetBody(
+  api: any,
+  options: Required<PluginOptions>,
+  setRefresher: (fn: (() => void) | null) => void,
+) {
   const [data, setData] = createSignal<UsageData | null>(null)
   const [error, setError] = createSignal<string | null>(null)
   const [now, setNow] = createSignal(Date.now())
+  const [busy, setBusy] = createSignal(false)
 
   let inFlight = false
   const refresh = async () => {
     if (inFlight) return
     inFlight = true
+    setBusy(true)
     try {
       const result = await fetchUsage({ product: options.product, bin: options.bin })
       setData(result)
@@ -59,27 +66,29 @@ function WidgetBody(api: any, options: Required<PluginOptions>) {
       setError(e instanceof UsageError ? e.message : String(e))
     } finally {
       inFlight = false
+      setBusy(false)
     }
   }
 
   refresh()
   const poll = setInterval(refresh, options.pollMs)
   const tick = setInterval(() => setNow(Date.now()), 1000)
+  setRefresher(refresh)
   onCleanup(() => {
     clearInterval(poll)
     clearInterval(tick)
+    setRefresher(null)
   })
 
   return box({ flexDirection: "column", flexShrink: 0 }, [
     () => {
       const d = data()
       const theme = api.theme.current
+      const rows: Child[] = []
       if (!d) {
-        return text({ fg: theme.textMuted }, [error() ? "ark ✕" : "ark …"])
-      }
-      return box(
-        { flexDirection: "column" },
-        d.windows.map((w) => {
+        rows.push(text({ fg: theme.textMuted }, [error() ? "ark ✕" : "ark …"]))
+      } else {
+        for (const w of d.windows) {
           const cd = options.showCountdown ? formatCountdown(w.resetAt, now()) : ""
           const row = [
             text({ fg: theme.textMuted }, [w.label]),
@@ -87,9 +96,16 @@ function WidgetBody(api: any, options: Required<PluginOptions>) {
             text({ fg: theme.text }, [`${Math.round(w.percent).toString().padStart(3, " ")}%`]),
           ] as Child[]
           if (cd) row.push(text({ fg: theme.textMuted }, [`in ${cd}`]))
-          return box({ flexDirection: "row", gap: 1, alignItems: "center" }, row)
-        }),
+          rows.push(box({ flexDirection: "row", gap: 1, alignItems: "center" }, row))
+        }
+      }
+      rows.push(
+        text(
+          { fg: theme.textMuted, onMouseDown: () => refresh() },
+          [busy() ? "↻ refreshing…" : `↻ ${options.refreshKey} refresh`],
+        ),
       )
+      return box({ flexDirection: "column" }, rows)
     },
   ])
 }
@@ -101,7 +117,28 @@ const tui: TuiPlugin = async (api, rawOptions) => {
     pollMs: (rawOptions?.pollMs as number) ?? 60_000,
     barWidth: (rawOptions?.barWidth as number) ?? 14,
     showCountdown: rawOptions?.showCountdown !== false,
+    refreshKey: (rawOptions?.refreshKey as string) ?? "ctrl+alt+r",
   }
+
+  // Latest widget's refresh fn; null when no session sidebar is mounted.
+  let refresher: (() => void) | null = null
+
+  // Manual refresh hotkey. ctrl+alt+r is unused by OpenCode's default
+  // keybinds and by tmux/shell/readline, and only matters while a session is
+  // open (the widget only mounts there).
+  const disposeLayer = api.keymap?.registerLayer?.({
+    commands: [
+      {
+        name: "volcengine-stats.refresh",
+        desc: "Refresh Ark Coding Plan usage",
+        run: () => {
+          refresher?.()
+        },
+      },
+    ],
+    bindings: [{ key: options.refreshKey, cmd: "volcengine-stats.refresh" }],
+  })
+  if (disposeLayer && api.lifecycle) api.lifecycle.onDispose(() => disposeLayer())
 
   api.slots.register({
     slots: {
@@ -110,7 +147,9 @@ const tui: TuiPlugin = async (api, rawOptions) => {
       // never appears on the home screen (matches context/mcp sidebar items).
       sidebar_content(_ctx: unknown, _props: unknown) {
         return box({ marginTop: 1, flexShrink: 0, flexDirection: "column" }, [
-          WidgetBody(api, options),
+          WidgetBody(api, options, (fn) => {
+            refresher = fn
+          }),
         ])
       },
     },

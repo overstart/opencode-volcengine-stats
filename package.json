@@ -1,10 +1,11 @@
 {
   "name": "opencode-volcengine-stats",
-  "version": "0.3.0",
-  "description": "OpenCode TUI plugin: show Volcengine Ark Coding Plan quota (5h / weekly / monthly) as progress bars in the session sidebar.",
+  "version": "1.0.0",
+  "description": "OpenCode V2 CLI plugin: show Volcengine Ark Coding Plan quota (5h / weekly / monthly) as progress bars in the session sidebar.",
   "keywords": [
     "opencode",
     "opencode-plugin",
+    "opencode-v2-plugin",
     "opencode-tui-plugin",
     "volcengine",
     "ark",
@@ -26,34 +27,39 @@
   },
   "exports": {
     "./tui": {
-      "import": "./tui.ts"
+      "import": "./tui.tsx"
     }
   },
   "files": [
-    "tui.ts",
+    "tui.tsx",
     "src",
     "README.md",
     "README.zh-CN.md",
     "LICENSE"
   ],
   "engines": {
-    "opencode": ">=1.18.0"
+    "opencode": ">=2.0.0"
   },
   "scripts": {
     "check": "bun run src/usage.ts --check",
-    "check:tui": "bun run check-tui.ts",
+    "check:tui": "bun run check-tui.tsx",
     "fetch": "bun run src/usage.ts",
     "typecheck": "tsc --noEmit",
     "pack:dry-run": "npm pack --dry-run"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "^1.18.29",
-    "@opentui/core": "^0.5.11",
-    "@opentui/solid": "^0.5.11",
-    "solid-js": "^1.9.15"
+    "@opencode/plugin": "^2.0.32"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.5.8",
+    "@opentui/solid": ">=0.5.8",
+    "solid-js": ">=1.9.0"
   },
   "devDependencies": {
+    "@opentui/core": "^0.5.11",
+    "@opentui/solid": "^0.5.11",
     "@types/bun": "latest",
+    "solid-js": "^1.9.15",
     "typescript": "^7.0.2"
   }
 }

@@ -20,12 +20,9 @@ export interface UsageWindow {
 
 export interface UsageData {
   product: string
-  edition?: string
   windows: UsageWindow[]
   updatedAt: number
 }
-
-export class UsageError extends Error {}
 
 interface ArkPeriod {
   label?: string
@@ -35,7 +32,6 @@ interface ArkPeriod {
 
 interface ArkItem {
   product?: string
-  edition?: string
   subscribed?: boolean
   periods?: ArkPeriod[]
 }
@@ -44,24 +40,22 @@ interface ArkPlanOutput {
   items?: ArkItem[]
 }
 
-const LABELS: Record<WindowKey, string> = {
-  session: "5h",
-  weekly: "1W",
-  monthly: "1M",
-}
-
-const ORDER: WindowKey[] = ["session", "weekly", "monthly"]
+const WINDOWS: [WindowKey, string][] = [
+  ["session", "5h"],
+  ["weekly", "1W"],
+  ["monthly", "1M"],
+]
+const LABEL = new Map<WindowKey, string>(WINDOWS)
 
 /**
  * Run `arkcli usage plan` and return the normalized Coding Plan windows.
- * Throws UsageError on any failure (missing binary, non-zero exit, bad JSON,
+ * Throws Error on any failure (missing binary, non-zero exit, bad JSON,
  * not subscribed). Callers are expected to catch and degrade gracefully.
  */
 export async function fetchUsage(options: {
   product?: string
   bin?: string
   timeoutMs?: number
-  signal?: AbortSignal
 } = {}): Promise<UsageData> {
   const product = options.product ?? "coding-plan"
   const bin = options.bin ?? "arkcli"
@@ -86,14 +80,14 @@ export async function fetchUsage(options: {
     stderr = err
     exitCode = await proc.exited
   } catch (e) {
-    throw new UsageError(`failed to run ${bin}: ${(e as Error).message}`)
+    throw new Error(`failed to run ${bin}: ${(e as Error).message}`)
   } finally {
     clearTimeout(timer)
   }
 
   if (exitCode !== 0) {
     const hint = stderr.trim().split("\n").pop() ?? ""
-    throw new UsageError(
+    throw new Error(
       `${bin} exited ${exitCode}${hint ? `: ${hint}` : " (not installed or not authenticated?)"}`,
     )
   }
@@ -102,7 +96,7 @@ export async function fetchUsage(options: {
   try {
     parsed = JSON.parse(stdout) as ArkPlanOutput
   } catch {
-    throw new UsageError(`could not parse ${bin} JSON output`)
+    throw new Error(`could not parse ${bin} JSON output`)
   }
 
   return normalize(parsed, product)
@@ -114,13 +108,13 @@ export function normalize(data: ArkPlanOutput, product: string): UsageData {
     (it) => (it.product ?? "") === product && it.subscribed !== false,
   )
   if (!item) {
-    throw new UsageError(`no subscribed ${product} plan reported by arkcli`)
+    throw new Error(`no subscribed ${product} plan reported by arkcli`)
   }
 
   const byKey = new Map<WindowKey, UsageWindow>()
   for (const p of item.periods ?? []) {
     const key = (p.label ?? "").toLowerCase() as WindowKey
-    const label = LABELS[key]
+    const label = LABEL.get(key)
     if (!label) continue
     byKey.set(key, {
       key,
@@ -130,14 +124,13 @@ export function normalize(data: ArkPlanOutput, product: string): UsageData {
     })
   }
 
-  const windows = ORDER.filter((k) => byKey.has(k)).map((k) => byKey.get(k)!)
+  const windows = WINDOWS.filter(([k]) => byKey.has(k)).map(([k]) => byKey.get(k)!)
   if (windows.length === 0) {
-    throw new UsageError(`${product} plan reported no usage windows`)
+    throw new Error(`${product} plan reported no usage windows`)
   }
 
   return {
     product,
-    edition: item.edition,
     windows,
     updatedAt: Date.now(),
   }
@@ -149,10 +142,10 @@ export function clampPercent(value: number): number {
 }
 
 /** Build a block-character progress bar string for a percentage. */
-export function bar(percent: number, width: number, fill = "█", empty = "░"): string {
+export function bar(percent: number, width: number): string {
   const w = Math.max(1, Math.floor(width))
   const filled = Math.round((clampPercent(percent) / 100) * w)
-  return fill.repeat(filled) + empty.repeat(w - filled)
+  return "█".repeat(filled) + "░".repeat(w - filled)
 }
 
 /** Compact "reset in" countdown, e.g. "4h12m", "35m", "6d". Empty when past. */
@@ -175,7 +168,6 @@ function selfCheck() {
     items: [
       {
         product: "coding-plan",
-        edition: "personal",
         subscribed: true,
         periods: [
           { label: "session", percent: 25.71, reset_at: new Date(Date.now() + 3 * 3600_000 + 12 * 60_000).toISOString() },
